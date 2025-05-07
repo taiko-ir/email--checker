@@ -1,68 +1,47 @@
 #!/bin/bash
 
-# دریافت دامنه از ورودی
+# رنگ‌ها
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+NC='\033[0m' # بدون رنگ
+
 read -p "Enter domain: " DOMAIN
 
-echo "----------------------------------"
-echo "1. Checking IP and SMTP host info..."
-echo "----------------------------------"
-IPCHECK_OUTPUT=$(ipcheck -rs "$DOMAIN")
+echo -e "\nChecking IP info..."
+OUTPUT=$(ipcheck -rs "$DOMAIN")
 
-# استخراج IP Address و SMTP host name
-IP_ADDRESS=$(echo "$IPCHECK_OUTPUT" | grep "IP Address:" | awk '{print $3}')
-SMTP_HOST=$(echo "$IPCHECK_OUTPUT" | grep "SMTP host name:" | cut -d: -f2 | xargs)
+IP=$(echo "$OUTPUT" | grep 'IP Address' | awk '{print $3}')
+SMTP_HOST=$(echo "$OUTPUT" | grep 'SMTP host name' | cut -d ':' -f2 | xargs)
 
-echo "IP Address: $IP_ADDRESS"
-echo "SMTP host name: $SMTP_HOST"
-echo ""
+echo -e "IP Address: ${GREEN}${IP}${NC}"
+echo -e "SMTP host name: ${GREEN}${SMTP_HOST}${NC}"
 
-# مقایسه رکورد TXT
-echo "----------------------------------"
-echo "2. Checking TXT records for domain..."
-echo "----------------------------------"
-TXT1=$(dig +short TXT "$DOMAIN" | tr -d '"')
-TXT2=$(dig @ns.netafraz.com +short TXT "$DOMAIN" | tr -d '"')
+echo -e "\nChecking TXT records..."
+TXT1=$(dig +short TXT "$DOMAIN")
+TXT2=$(dig @ns.netafraz.com +short TXT "$DOMAIN")
 
-echo "TXT (default): $TXT1"
-echo "TXT (netafraz): $TXT2"
-if [ "$TXT1" = "$TXT2" ]; then
-  echo "Result: TXT records match ✅"
+if [ "$TXT1" == "$TXT2" ]; then
+    echo -e "Result: ${GREEN}TXT records match ✅${NC}"
 else
-  echo "Result: TXT records do NOT match ❌"
+    echo -e "Result: ${RED}TXT records do NOT match ❌${NC}"
 fi
-echo ""
 
-# مقایسه رکورد domainkey
-echo "----------------------------------"
-echo "3. Checking domainkey TXT records..."
-echo "----------------------------------"
-DK1=$(dig +short TXT "x._domainkey.$DOMAIN" | tr -d '"')
-DK2=$(dig @ns.netafraz.com +short TXT "x._domainkey.$DOMAIN" | tr -d '"')
+echo -e "\nChecking domainkey TXT records..."
+DKIM1=$(dig +short TXT "x._domainkey.${DOMAIN}")
+DKIM2=$(dig @ns.netafraz.com +short TXT "x._domainkey.${DOMAIN}")
 
-echo "x._domainkey TXT (default): $DK1"
-echo "x._domainkey TXT (netafraz): $DK2"
-if [ "$DK1" = "$DK2" ]; then
-  echo "Result: domainkey TXT records match ✅"
+if [ "$DKIM1" == "$DKIM2" ]; then
+    echo -e "Result: ${GREEN}domainkey TXT records match ✅${NC}"
 else
-  echo "Result: domainkey TXT records do NOT match ❌"
+    echo -e "Result: ${RED}domainkey TXT records do NOT match ❌${NC}"
 fi
-echo ""
 
-# رکوردهای MX و A
-echo "----------------------------------"
-echo "4. Checking MX and A records..."
-echo "----------------------------------"
+echo -e "\nChecking MX and mail A records..."
 MX_RECORDS=$(dig +short MX "$DOMAIN")
-A_RECORD=$(dig +short A "mail.$DOMAIN")
+A_RECORD=$(dig +short A "mail.${DOMAIN}")
 
-echo "MX records:"
-echo "$MX_RECORDS"
-echo "A record for mail.$DOMAIN:"
-echo "$A_RECORD"
-echo ""
+echo -e "MX Records:\n${GREEN}${MX_RECORDS}${NC}"
+echo -e "A Record for mail.${DOMAIN}: ${GREEN}${A_RECORD}${NC}"
 
-# نمایش email_stat
-echo "----------------------------------"
-echo "5. Email Stat:"
-echo "----------------------------------"
+echo -e "\nChecking email_stat..."
 email_stat -c
