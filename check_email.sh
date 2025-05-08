@@ -1,22 +1,32 @@
 #!/bin/bash
 
+# دریافت دامنه از ورودی
+read -p "Enter domain: " DOMAIN
+
 # رنگ‌ها
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m' # بدون رنگ
 
-read -p "Enter domain: " DOMAIN
-
-echo -e "\nChecking IP info..."
+echo "----------------------------------"
+echo "1. Checking IP and  host info..."
+echo "----------------------------------"
 OUTPUT=$(ipcheck -rs "$DOMAIN")
 
 IP=$(echo "$OUTPUT" | grep 'IP Address' | awk '{print $3}')
-SMTP_HOST=$(echo "$OUTPUT" | grep 'SMTP host name' | cut -d ':' -f2 | xargs)
+HOST=$(echo "$OUTPUT" | grep 'SMTP host name' | cut -d ':' -f2 | xargs)
 
 echo -e "IP Address: ${GREEN}${IP}${NC}"
-echo -e "SMTP host name: ${GREEN}${SMTP_HOST}${NC}"
+echo -e "host name: ${GREEN}${HOST}${NC}"
 
-echo -e "\nChecking TXT records..."
+echo "IP Address: $IP_ADDRESS"
+echo "SMTP host name: $HOST"
+echo ""
+
+# مقایسه رکورد TXT
+echo "----------------------------------"
+echo "2. Checking TXT records for domain..."
+echo "----------------------------------"
 TXT1=$(dig +short TXT "$DOMAIN")
 TXT2=$(dig @ns.netafraz.com +short TXT "$DOMAIN")
 
@@ -25,8 +35,12 @@ if [ "$TXT1" == "$TXT2" ]; then
 else
     echo -e "Result: ${RED}TXT records do NOT match ❌${NC}"
 fi
+echo ""
 
-echo -e "\nChecking domainkey TXT records..."
+# مقایسه رکورد domainkey
+echo "----------------------------------"
+echo "3. Checking domainkey TXT records..."
+echo "----------------------------------"
 DKIM1=$(dig +short TXT "x._domainkey.${DOMAIN}")
 DKIM2=$(dig @ns.netafraz.com +short TXT "x._domainkey.${DOMAIN}")
 
@@ -35,13 +49,22 @@ if [ "$DKIM1" == "$DKIM2" ]; then
 else
     echo -e "Result: ${RED}domainkey TXT records do NOT match ❌${NC}"
 fi
+echo ""
 
-echo -e "\nChecking MX and mail A records..."
+# رکوردهای MX و A
+echo "----------------------------------"
+echo "4. Checking MX and A records..."
+echo "----------------------------------"
 MX_RECORDS=$(dig +short MX "$DOMAIN")
 A_RECORD=$(dig +short A "mail.${DOMAIN}")
 
 echo -e "MX Records:\n${GREEN}${MX_RECORDS}${NC}"
+echo ""
 echo -e "A Record for mail.${DOMAIN}: ${GREEN}${A_RECORD}${NC}"
+echo ""
 
-echo -e "\nChecking email_stat..."
+# نمایش email_stat
+echo "----------------------------------"
+echo "5. Email Stat:"
+echo "----------------------------------"
 email_stat -c
