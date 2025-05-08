@@ -67,4 +67,13 @@ echo ""
 echo "----------------------------------"
 echo "5. Email Stat:"
 echo "----------------------------------"
-email_stat -c
+# اجرای email_stat و گرفتن stderr
+ERROR_OUTPUT=$(email_stat -c 2>&1)
+EXIT_CODE=$?
+if [ $EXIT_CODE -ne 0 ]; then
+    # فقط پیام خطا با رنگ قرمز
+    echo -e "${RED}${ERROR_OUTPUT}${NC}"
+else
+    # خروجی عادی
+    echo "$ERROR_OUTPUT"
+fi
