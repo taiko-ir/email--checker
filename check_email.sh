@@ -4,7 +4,8 @@
 read -p "Enter domain: " DOMAIN
 
 # رنگ‌ها
-GREEN='\033[0;32m'
+GREEN='\e[1;32m'
+#'\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m' # بدون رنگ
 
