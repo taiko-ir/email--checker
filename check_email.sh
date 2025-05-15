@@ -19,8 +19,6 @@ HOST=$(echo "$OUTPUT" | grep 'SMTP host name' | cut -d ':' -f2 | xargs)
 echo -e "IP Address: ${GREEN}${IP}${NC}"
 echo -e "host name: ${GREEN}${HOST}${NC}"
 
-echo "IP Address: $IP_ADDRESS"
-echo "SMTP host name: $HOST"
 echo ""
 
 # مقایسه رکورد TXT (به‌صورت مجموعه‌ای)
@@ -55,14 +53,32 @@ else
 fi
 echo ""
 
-# مقایسه رکورد domainkey
+# مقایسه رکورد domainkey به‌صورت مجموعه‌ای
 echo "----------------------------------"
 echo "3. Checking domainkey TXT records..."
 echo "----------------------------------"
-DKIM1=$(dig +short TXT "x._domainkey.${DOMAIN}")
-DKIM2=$(dig @ns.netafraz.com +short TXT "x._domainkey.${DOMAIN}")
+# می‌گیریم و کوتیشن‌ها را حذف می‌کنیم
+mapfile -t DK1_ARR < <(dig +short TXT "x._domainkey.${DOMAIN}" | tr -d '"' | sort)
+mapfile -t DK2_ARR < <(dig @ns.netafraz.com +short TXT "x._domainkey.${DOMAIN}" | tr -d '"' | sort)
 
-if [ "$DKIM1" == "$DKIM2" ]; then
+# تابع کمک برای join با خط جدید
+join_lines() {
+  printf "%s\n" "${@}"
+}
+
+# لیست‌ها را join می‌کنیم
+DK1_JOINED=$(join_lines "${DK1_ARR[@]}")
+DK2_JOINED=$(join_lines "${DK2_ARR[@]}")
+
+echo "x._domainkey TXT (default):"
+echo "$DK1_JOINED"
+echo ""
+echo "x._domainkey TXT (netafraz):"
+echo "$DK2_JOINED"
+echo ""
+
+# مقایسه با diff
+if diff <(echo "$DK1_JOINED") <(echo "$DK2_JOINED") &>/dev/null; then
     echo -e "Result: ${GREEN}domainkey TXT records match ✅${NC}"
 else
     echo -e "Result: ${RED}domainkey TXT records do NOT match ❌${NC}"
