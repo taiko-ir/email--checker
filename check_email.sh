@@ -23,14 +23,32 @@ echo "IP Address: $IP_ADDRESS"
 echo "SMTP host name: $HOST"
 echo ""
 
-# مقایسه رکورد TXT
+# مقایسه رکورد TXT (به‌صورت مجموعه‌ای)
 echo "----------------------------------"
 echo "2. Checking TXT records for domain..."
 echo "----------------------------------"
-TXT1=$(dig +short TXT "$DOMAIN")
-TXT2=$(dig @ns.netafraz.com +short TXT "$DOMAIN")
+# می‌گیریم و کوتیشن‌ها را حذف می‌کنیم
+mapfile -t ARR1 < <(dig +short TXT "$DOMAIN" | tr -d '"' | sort)
+mapfile -t ARR2 < <(dig @ns.netafraz.com +short TXT "$DOMAIN" | tr -d '"' | sort)
 
-if [ "$TXT1" == "$TXT2" ]; then
+# تابع کمک برای join با خط جدید
+join_lines() {
+  printf "%s\n" "${@}"
+}
+
+# لیست‌ها را join می‌کنیم
+TXT1_JOINED=$(join_lines "${ARR1[@]}")
+TXT2_JOINED=$(join_lines "${ARR2[@]}")
+
+echo "TXT (default):"
+echo "$TXT1_JOINED"
+echo ""
+echo "TXT (netafraz):"
+echo "$TXT2_JOINED"
+echo ""
+
+# مقایسه با diff
+if diff <(echo "$TXT1_JOINED") <(echo "$TXT2_JOINED") &>/dev/null; then
     echo -e "Result: ${GREEN}TXT records match ✅${NC}"
 else
     echo -e "Result: ${RED}TXT records do NOT match ❌${NC}"
