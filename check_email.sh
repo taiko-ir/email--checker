@@ -1,23 +1,35 @@
 #!/bin/bash
 
-# دریافت دامنه از ورودی
 read -p "Enter domain: " DOMAIN
 
-# رنگ‌ها
-GREEN='\e[1;92m '
+GREEN='\e[1;92m'
 RED='\e[1;91m'
-NC='\033[0m' # بدون رنگ
+YELLOW='\e[1;93m'
+NC='\033[0m'
 
 echo "----------------------------------"
-echo "1. Checking IP and  host info..."
+echo "1. Checking IP and host info..."
 echo "----------------------------------"
+
 OUTPUT=$(ipcheck -rs "$DOMAIN")
 
 IP=$(echo "$OUTPUT" | grep 'IP Address' | awk '{print $3}')
 HOST=$(echo "$OUTPUT" | grep 'SMTP host name' | cut -d ':' -f2 | xargs)
 
+# دریافت IP واقعی با userips
+REAL_IP=$(userips | grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}')
+
 echo -e "IP Address: ${GREEN}${IP}${NC}"
 echo -e "host name: ${GREEN}${HOST}${NC}"
+
+# مقایسه IP
+if [[ "$IP" == "$REAL_IP" ]]; then
+    echo -e "✅ IP matches userips ✔️"
+else
+    echo -e "${YELLOW}⚠️  IP does NOT match userips ⚠️${NC}"
+fi
+
+echo ""
 
 echo ""
 
@@ -111,3 +123,17 @@ else
     # خروجی عادی
     echo "$ERROR_OUTPUT"
 fi
+echo "----------------------------------"
+echo "6. Checking maills output..."
+echo "----------------------------------"
+
+MAILLS_OUTPUT=$(maills "$DOMAIN")
+echo "$MAILLS_OUTPUT"
+echo ""
+
+if echo "$MAILLS_OUTPUT" | grep -q "$DOMAIN"; then
+    echo -e "${GREEN}✅ maills output is valid${NC}"
+else
+    echo -e "${RED}❌ maills output does NOT contain domain${NC}"
+fi
+
