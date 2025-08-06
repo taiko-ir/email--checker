@@ -10,21 +10,21 @@ echo "----------------------------------"
 echo "1. Checking IP and host info..."
 echo "----------------------------------"
 
-# اجرای ipcheck برای دامنه
-OUTPUT=$(ipcheck -rs "$DOMAIN")
+# اجرای ipcheck و حذف escape sequences (رنگ/بولد)
+CLEAN_OUTPUT=$(ipcheck -rs "$DOMAIN" | sed -r "s/\x1B\[[0-9;]*[mK]//g")
 
-# استخراج مقادیر خام (بدون رنگ، کاملاً تمیز)
-RAW_IP=$(echo "$OUTPUT" | grep 'IP Address' | awk '{print $3}' | tr -d '\r\n[:space:]')
-HOST=$(echo "$OUTPUT" | grep 'SMTP host name' | awk -F':' '{print $2}' | xargs)
+# استخراج مقادیر از خروجی تمیز
+RAW_IP=$(echo "$CLEAN_OUTPUT" | grep 'IP Address' | awk '{print $3}' | tr -d '\r\n[:space:]')
+HOST=$(echo "$CLEAN_OUTPUT" | grep 'SMTP host name' | awk -F':' '{print $2}' | xargs)
 
-# گرفتن IP اصلی از userips
+# گرفتن IP واقعی از userips و تمیزکاری
 REAL_IP=$(userips | grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}' | head -n1 | tr -d '\r\n[:space:]')
 
-# نمایش برای کاربر (حالا رنگ اضافه می‌شود ولی به مقدار اصلی آسیبی نمی‌زند)
+# نمایش IP و host
 echo -e "IP Address: ${GREEN}${RAW_IP}${NC}"
 echo -e "host name: ${GREEN}${HOST}${NC}"
 
-# مقایسه IP
+# مقایسه IPها
 if [[ "$RAW_IP" == "$REAL_IP" ]]; then
     echo -e "${GREEN}✅ IP matches userips ✔️${NC}"
 else
