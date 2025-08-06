@@ -6,7 +6,6 @@ GREEN='\e[1;92m'
 RED='\e[1;91m'
 YELLOW='\e[1;93m'
 NC='\033[0m'
-
 echo "----------------------------------"
 echo "1. Checking IP and host info..."
 echo "----------------------------------"
@@ -14,29 +13,26 @@ echo "----------------------------------"
 # اجرای ipcheck برای دامنه
 OUTPUT=$(ipcheck -rs "$DOMAIN")
 
-# استخراج IP و تمیزکاری دقیق
-IP=$(echo "$OUTPUT" | grep 'IP Address' | awk '{print $3}' | tr -d '\r\n[:space:]')
-
-# استخراج host name و تمیزکاری
+# استخراج مقادیر خام (بدون رنگ، کاملاً تمیز)
+RAW_IP=$(echo "$OUTPUT" | grep 'IP Address' | awk '{print $3}' | tr -d '\r\n[:space:]')
 HOST=$(echo "$OUTPUT" | grep 'SMTP host name' | awk -F':' '{print $2}' | xargs)
 
-# گرفتن IP اصلی با userips و تمیزکاری دقیق
+# گرفتن IP اصلی از userips
 REAL_IP=$(userips | grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}' | head -n1 | tr -d '\r\n[:space:]')
 
-# نمایش IP و host
-echo -e "IP Address: ${GREEN}${IP}${NC}"
+# نمایش برای کاربر (حالا رنگ اضافه می‌شود ولی به مقدار اصلی آسیبی نمی‌زند)
+echo -e "IP Address: ${GREEN}${RAW_IP}${NC}"
 echo -e "host name: ${GREEN}${HOST}${NC}"
 
 # مقایسه IP
-if [[ "$IP" == "$REAL_IP" ]]; then
+if [[ "$RAW_IP" == "$REAL_IP" ]]; then
     echo -e "${GREEN}✅ IP matches userips ✔️${NC}"
 else
     echo -e "${YELLOW}⚠️  IP does NOT match userips ⚠️${NC}"
-    echo -e "(Debug: IP='$IP' vs REAL_IP='$REAL_IP')"  # ← برای دیباگ (می‌تونی حذفش کنی)
+    echo -e "(Debug: IP='$RAW_IP' vs REAL_IP='$REAL_IP')"
 fi
 
 echo ""
-
 
 # مقایسه رکورد TXT (به‌صورت مجموعه‌ای)
 echo "----------------------------------"
