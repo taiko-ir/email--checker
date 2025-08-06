@@ -14,15 +14,14 @@ echo "----------------------------------"
 # اجرای ipcheck برای دامنه
 OUTPUT=$(ipcheck -rs "$DOMAIN")
 
-# استخراج IP و تمیزکاری (حذف فاصله‌های اضافی)
-#IP=$(echo "$OUTPUT" | grep 'IP Address' | awk -F':' '{print $2}' | xargs)
-IP=$(echo "$OUTPUT" | grep 'IP Address' | awk '{print $3}')
+# استخراج IP و تمیزکاری دقیق
+IP=$(echo "$OUTPUT" | grep 'IP Address' | awk '{print $3}' | tr -d '\r\n[:space:]')
 
 # استخراج host name و تمیزکاری
 HOST=$(echo "$OUTPUT" | grep 'SMTP host name' | awk -F':' '{print $2}' | xargs)
 
-# گرفتن IP اصلی با userips و حذف فاصله اضافی
-REAL_IP=$(userips | grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}' | head -n1 | xargs)
+# گرفتن IP اصلی با userips و تمیزکاری دقیق
+REAL_IP=$(userips | grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}' | head -n1 | tr -d '\r\n[:space:]')
 
 # نمایش IP و host
 echo -e "IP Address: ${GREEN}${IP}${NC}"
@@ -33,6 +32,7 @@ if [[ "$IP" == "$REAL_IP" ]]; then
     echo -e "${GREEN}✅ IP matches userips ✔️${NC}"
 else
     echo -e "${YELLOW}⚠️  IP does NOT match userips ⚠️${NC}"
+    echo -e "(Debug: IP='$IP' vs REAL_IP='$REAL_IP')"  # ← برای دیباگ (می‌تونی حذفش کنی)
 fi
 
 echo ""
