@@ -15,7 +15,8 @@ echo "----------------------------------"
 OUTPUT=$(ipcheck -rs "$DOMAIN")
 
 # استخراج IP و تمیزکاری (حذف فاصله‌های اضافی)
-IP=$(echo "$OUTPUT" | grep 'IP Address' | awk -F':' '{print $2}' | xargs)
+#IP=$(echo "$OUTPUT" | grep 'IP Address' | awk -F':' '{print $2}' | xargs)
+IP=$(echo "$OUTPUT" | grep 'IP Address' | awk '{print $3}')
 
 # استخراج host name و تمیزکاری
 HOST=$(echo "$OUTPUT" | grep 'SMTP host name' | awk -F':' '{print $2}' | xargs)
