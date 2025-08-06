@@ -13,7 +13,7 @@ echo "----------------------------------"
 
 OUTPUT=$(ipcheck -rs "$DOMAIN")
 
-IP=$(echo "$OUTPUT" | grep 'IP Address' | awk '{print $3}')
+#IP=$(echo "$OUTPUT" | grep 'IP Address' | awk '{print $3}')
 HOST=$(echo "$OUTPUT" | grep 'SMTP host name' | cut -d ':' -f2 | xargs)
 
 # دریافت IP واقعی با userips
