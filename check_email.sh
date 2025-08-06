@@ -17,19 +17,21 @@ IP=$(echo "$OUTPUT" | grep 'IP Address' | awk '{print $3}')
 HOST=$(echo "$OUTPUT" | grep 'SMTP host name' | cut -d ':' -f2 | xargs)
 
 # دریافت IP واقعی با userips
-REAL_IP=$(userips | grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}')
+# دریافت IP از ipcheck
+IP=$(echo "$OUTPUT" | grep 'IP Address' | awk -F':' '{print $2}' | xargs)
+
+# دریافت IP واقعی از userips
+REAL_IP=$(userips | grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}' | head -n1 | xargs)
 
 echo -e "IP Address: ${GREEN}${IP}${NC}"
 echo -e "host name: ${GREEN}${HOST}${NC}"
 
-# مقایسه IP
+# مقایسه IPها
 if [[ "$IP" == "$REAL_IP" ]]; then
     echo -e "✅ IP matches userips ✔️"
 else
     echo -e "${YELLOW}⚠️  IP does NOT match userips ⚠️${NC}"
 fi
-
-echo ""
 
 echo ""
 
