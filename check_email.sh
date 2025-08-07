@@ -15,7 +15,7 @@ CLEAN_OUTPUT=$(ipcheck "$DOMAIN" | sed 's/\x1B\[[0-9;]*m//g' | grep -oE '[0-9]+\
 
 # استخراج مقادیر از خروجی تمیز
 RAW_IP=$(ipcheck "$DOMAIN" | sed 's/\x1B\[[0-9;]*m//g' | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+')
-HOST=$(ipcheck "$DOMAIN" | sed 's/\x1B\[[0-9;]*m//g' | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+')
+HOST=$(echo "$CLEAN_OUTPUT" | grep 'SMTP host name' | awk -F':' '{print $2}' | xargs)
 
 # گرفتن IP واقعی از userips و تمیزکاری
 REAL_IP=$(userips | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+')
