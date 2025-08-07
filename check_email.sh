@@ -11,7 +11,7 @@ echo "1. Checking IP and host info..."
 echo "----------------------------------"
 
 # اجرای ipcheck و حذف escape sequences (رنگ/بولد)
-CLEAN_OUTPUT=$(ipcheck "$DOMAIN" | sed 's/\x1B\[[0-9;]*m//g')
+CLEAN_OUTPUT=$(ipcheck -rs "$DOMAIN" | sed 's/\x1B\[[0-9;]*m//g')
 
 # استخراج مقادیر از خروجی تمیز
 #RAW_IP=$(echo "$CLEAN_OUTPUT" | grep 'IP Address' | awk '{print $3}' | tr -d '\r\n[:space:]')
