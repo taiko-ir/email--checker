@@ -11,14 +11,14 @@ echo "1. Checking IP and host info..."
 echo "----------------------------------"
 
 # اجرای ipcheck و حذف escape sequences (رنگ/بولد)
-CLEAN_OUTPUT=$(ipcheck -rs "$DOMAIN" | sed -r "s/\x1B\[[0-9;]*[mK]//g")
+CLEAN_OUTPUT=$(ipcheck "$DOMAIN" | sed 's/\x1B\[[0-9;]*m//g' | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+')
 
 # استخراج مقادیر از خروجی تمیز
-RAW_IP=$(echo "$CLEAN_OUTPUT" | grep 'IP Address' | awk '{print $3}' | tr -d '\r\n[:space:]')
-HOST=$(echo "$CLEAN_OUTPUT" | grep 'SMTP host name' | awk -F':' '{print $2}' | xargs)
+RAW_IP=$(CLEAN_OUTPUT)
+HOST=$(CLEAN_OUTPUT)
 
 # گرفتن IP واقعی از userips و تمیزکاری
-REAL_IP=$(userips | grep -Eo '([0-9]{1,3}\.){3}[0-9]{1,3}' | head -n1 | tr -d '\r\n[:space:]')
+REAL_IP=$(userips | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+')
 
 # نمایش IP و host
 echo -e "IP Address: ${GREEN}${RAW_IP}${NC}"
