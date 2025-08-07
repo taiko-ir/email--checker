@@ -1,5 +1,5 @@
 #!/bin/bash
-
+clear
 read -p "Enter domain: " DOMAIN
 
 GREEN='\e[1;92m'
