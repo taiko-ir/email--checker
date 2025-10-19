@@ -71,11 +71,11 @@ mapfile -t SPF2 < <(printf "%s\n" "${ARR2[@]}" | grep -i '^v=spf1' || true)
 SPF1_JOINED=$(join_lines "${SPF1[@]}")
 SPF2_JOINED=$(join_lines "${SPF2[@]}")
 
-echo "-----------------------------"
-echo "SPF Comparison:"
-echo "Default SPF: $SPF1_JOINED"
-echo "Netafraz SPF: $SPF2_JOINED"
-echo "-----------------------------"
+#echo "-----------------------------"
+#echo "SPF Comparison:"
+#echo "Default SPF: $SPF1_JOINED"
+#echo "Netafraz SPF: $SPF2_JOINED"
+#echo "-----------------------------"
 
 # مقایسه فقط SPF
 if diff <(echo "$SPF1_JOINED") <(echo "$SPF2_JOINED") &>/dev/null; then
