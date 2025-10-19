@@ -13,7 +13,7 @@ echo "----------------------------------"
 # اجرای ipcheck و حذف escape sequences (رنگ/بولد)
 CLEAN_OUTPUT=$(ipcheck -rs "$DOMAIN" | sed 's/\x1B\[[0-9;]*m//g')
 
-# استخراج مقادیر از خروجی تمیز
+# استخراج مقادیر از ipcheck 
 #RAW_IP=$(echo "$CLEAN_OUTPUT" | grep 'IP Address' | awk '{print $3}' | tr -d '\r\n[:space:]')
 #HOST=$(echo "$CLEAN_OUTPUT" | grep "SMTP host name" | cut -d ':' -f2 | xargs)
 
@@ -44,7 +44,7 @@ echo ""
 echo "----------------------------------"
 echo "2. Checking TXT records for domain..."
 echo "----------------------------------"
-# می‌گیریم و کوتیشن‌ها را حذف می‌کنیم
+# دریافت رکوردهای TXT از دو منبع
 mapfile -t ARR1 < <(dig +short TXT "$DOMAIN" | tr -d '"' | sort)
 mapfile -t ARR2 < <(dig @ns.netafraz.com +short TXT "$DOMAIN" | tr -d '"' | sort)
 
@@ -53,7 +53,7 @@ join_lines() {
   printf "%s\n" "${@}"
 }
 
-# لیست‌ها را join می‌کنیم
+# نمایش تمام رکوردهای TXT
 TXT1_JOINED=$(join_lines "${ARR1[@]}")
 TXT2_JOINED=$(join_lines "${ARR2[@]}")
 
@@ -64,15 +64,27 @@ echo "TXT (netafraz):"
 echo "$TXT2_JOINED"
 echo ""
 
-# مقایسه با diff
-if diff <(echo "$TXT1_JOINED") <(echo "$TXT2_JOINED") &>/dev/null; then
-    echo -e "Result: ${GREEN}TXT records match ✅${NC}"
+# استخراج فقط رکوردهای SPF برای مقایسه
+mapfile -t SPF1 < <(printf "%s\n" "${ARR1[@]}" | grep -i '^v=spf1' || true)
+mapfile -t SPF2 < <(printf "%s\n" "${ARR2[@]}" | grep -i '^v=spf1' || true)
+
+SPF1_JOINED=$(join_lines "${SPF1[@]}")
+SPF2_JOINED=$(join_lines "${SPF2[@]}")
+
+echo "-----------------------------"
+echo "SPF Comparison:"
+echo "Default SPF: $SPF1_JOINED"
+echo "Netafraz SPF: $SPF2_JOINED"
+echo "-----------------------------"
+
+# مقایسه فقط SPF
+if diff <(echo "$SPF1_JOINED") <(echo "$SPF2_JOINED") &>/dev/null; then
+    echo -e "Result: ${GREEN}SPF records match ✅${NC}"
 else
-    echo -e "Result: ${RED}TXT records do NOT match ❌${NC}"
+    echo -e "Result: ${RED}SPF records do NOT match ❌${NC}"
 fi
 echo ""
 
-# مقایسه رکورد domainkey به‌صورت مجموعه‌ای
 echo "----------------------------------"
 echo "3. Checking domainkey TXT records..."
 echo "----------------------------------"
