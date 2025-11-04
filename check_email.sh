@@ -120,12 +120,49 @@ echo ""
 echo "----------------------------------"
 echo "4. Checking MX and A records..."
 echo "----------------------------------"
-MX_RECORDS=$(dig +short MX "$DOMAIN")
-A_RECORD=$(dig +short A "mail.${DOMAIN}")
 
-echo -e "MX Records:\n${GREEN}${MX_RECORDS}${NC}"
+MX_RECORDS=$(dig +short MX "$DOMAIN" | grep -v '^;' | awk '{print $2}' | sed 's/\.$//')
+A_RECORD=$(dig +short A "mail.${DOMAIN}" | head -n1 | tr -d '[:space:]')
+
+# وضعیت اولیه
+MX_OK=false
+A_OK=false
+IP_MATCH_OK=false
+
+# بررسی MX: آیا mail.${DOMAIN} در MX وجود دارد؟
+if echo "$MX_RECORDS" | grep -q "^mail\.${DOMAIN}$" 2>/dev/null; then
+    MX_OK=true
+fi
+
+# بررسی A رکورد
+if [ -n "$A_RECORD" ]; then
+    A_OK=true
+    # بررسی تطابق IP
+    if [ "$A_RECORD" = "$REAL_IP" ]; then
+        IP_MATCH_OK=true
+    fi
+fi
+
+# نمایش نتایج
+echo -e "MX Records:"
+if [ "$MX_OK" = true ]; then
+    echo -e "${GREEN}$(echo "$MX_RECORDS" | sed "s/^mail\.${DOMAIN}$/& (OK)/")${NC}"
+else
+    echo -e "${RED}Error: mail.${DOMAIN} not found in MX records!${NC}"
+    echo -e "${RED}Current MX: ${MX_RECORDS:-None}${NC}"
+fi
 echo ""
-echo -e "A Record for mail.${DOMAIN}: ${GREEN}${A_RECORD}${NC}"
+
+echo -e "A Record for mail.${DOMAIN}:"
+if [ "$A_OK" = true ]; then
+    if [ "$IP_MATCH_OK" = true ]; then
+        echo -e "${GREEN}${A_RECORD} (Matches user IP: ${REAL_IP})${NC}"
+    else
+        echo -e "${RED}${A_RECORD} (Does NOT match user IP: ${REAL_IP})${NC}"
+    fi
+else
+    echo -e "${RED}Error: No A record found for mail.${DOMAIN}!${NC}"
+fi
 echo ""
 
 # نمایش email_stat
