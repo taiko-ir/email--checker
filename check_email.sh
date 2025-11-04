@@ -57,12 +57,12 @@ join_lines() {
 TXT1_JOINED=$(join_lines "${ARR1[@]}")
 TXT2_JOINED=$(join_lines "${ARR2[@]}")
 
-echo "TXT (default):"
-echo "$TXT1_JOINED"
-echo ""
-echo "TXT (netafraz):"
-echo "$TXT2_JOINED"
-echo ""
+# echo "TXT (default):"
+# echo "$TXT1_JOINED"
+# echo ""
+# echo "TXT (netafraz):"
+# echo "$TXT2_JOINED"
+# echo ""
 
 # استخراج فقط رکوردهای SPF برای مقایسه
 mapfile -t SPF1 < <(printf "%s\n" "${ARR1[@]}" | grep -i '^v=spf1' || true)
