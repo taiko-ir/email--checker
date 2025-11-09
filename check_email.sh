@@ -43,7 +43,7 @@ echo ""
 # مقایسه رکورد TXT (به‌صورت مجموعه‌ای)
 echo "----------------------------------"
 echo "2. Checking TXT records for domain..."
-echo "----------------------------------"
+#echo "----------------------------------"
 # دریافت رکوردهای TXT از دو منبع
 mapfile -t ARR1 < <(dig +short TXT "$DOMAIN" | tr -d '"' | sort)
 mapfile -t ARR2 < <(dig @ns.netafraz.com +short TXT "$DOMAIN" | tr -d '"' | sort)
@@ -71,11 +71,11 @@ mapfile -t SPF2 < <(printf "%s\n" "${ARR2[@]}" | grep -i '^v=spf1' || true)
 SPF1_JOINED=$(join_lines "${SPF1[@]}")
 SPF2_JOINED=$(join_lines "${SPF2[@]}")
 
-echo "-----------------------------"
+echo "----------------------------------"
 echo "SPF Comparison:"
 echo "Default SPF: $SPF1_JOINED"
 echo "Netafraz SPF: $SPF2_JOINED"
-echo "-----------------------------"
+echo "----------------------------------"
 
 # مقایسه فقط SPF
 if diff <(echo "$SPF1_JOINED") <(echo "$SPF2_JOINED") &>/dev/null; then
