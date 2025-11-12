@@ -1,6 +1,7 @@
 #!/bin/bash
 clear
-read -rp "Enter domain: " DOMAIN
+#read -rp "Enter domain: " DOMAIN
+read -rp "Enter domain: " -e DOMAIN
 
 GREEN='\e[1;92m'
 RED='\e[1;91m'
