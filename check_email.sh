@@ -1,6 +1,6 @@
 #!/bin/bash
 clear
-read -p "Enter domain: " DOMAIN
+read -rp "Enter domain: " DOMAIN
 
 GREEN='\e[1;92m'
 RED='\e[1;91m'
@@ -121,49 +121,109 @@ echo "----------------------------------"
 echo "4. Checking MX and A records..."
 echo "----------------------------------"
 
-MX_RECORDS=$(dig +short MX "$DOMAIN" | grep -v '^;' | awk '{print $2}' | sed 's/\.$//')
-A_RECORD=$(dig +short A "mail.${DOMAIN}" | head -n1 | tr -d '[:space:]')
+# دریافت رکوردهای MX دامنه (فقط نام هاست‌ها)
+MX_RECORDS=$(dig +short MX "$DOMAIN" | awk '{print $2}' | sed 's/\.$//')
 
 # وضعیت اولیه
 MX_OK=false
 A_OK=false
 IP_MATCH_OK=false
+MX_HOST=""
+MX_IP=""
 
-# بررسی MX: آیا mail.${DOMAIN} در MX وجود دارد؟
-if echo "$MX_RECORDS" | grep -q "^mail\.${DOMAIN}$" 2>/dev/null; then
-    MX_OK=true
-fi
-
-# بررسی A رکورد
-if [ -n "$A_RECORD" ]; then
-    A_OK=true
-    # بررسی تطابق IP
-    if [ "$A_RECORD" = "$REAL_IP" ]; then
-        IP_MATCH_OK=true
-    fi
-fi
-
-# نمایش نتایج
-echo -e "MX Records:"
-if [ "$MX_OK" = true ]; then
-    echo -e "${GREEN}$(echo "$MX_RECORDS" | sed "s/^mail\.${DOMAIN}$/& (OK)/")${NC}"
+# نمایش رکوردهای MX
+echo -e "MX Records for ${DOMAIN}:"
+if [ -z "$MX_RECORDS" ]; then
+    echo -e "${RED}Error: No MX record found for ${DOMAIN}!${NC}"
 else
-    echo -e "${RED}Error: mail.${DOMAIN} not found in MX records!${NC}"
-    echo -e "${RED}Current MX: ${MX_RECORDS:-None}${NC}"
+    MX_OK=true
+    # نمایش همه MXها
+    while IFS= read -r mx; do
+        echo "  - $mx"
+    done <<< "$MX_RECORDS"
 fi
 echo ""
 
-echo -e "A Record for mail.${DOMAIN}:"
+# بررسی اولین MX (یا همه، اما برای سادگی اولین را بررسی می‌کنیم)
+if [ -n "$MX_RECORDS" ]; then
+    # اولین MX را انتخاب می‌کنیم
+    MX_HOST=$(echo "$MX_RECORDS" | head -n1)
+    
+    # دریافت IP (A یا AAAA)
+    MX_IP=$(dig +short A "$MX_HOST" | head -n1)
+    if [ -z "$MX_IP" ]; then
+        MX_IP=$(dig +short AAAA "$MX_HOST" | head -n1)
+    fi
+
+    if [ -n "$MX_IP" ]; then
+        A_OK=true
+        if [ "$MX_IP" = "$REAL_IP" ]; then
+            IP_MATCH_OK=true
+        fi
+    fi
+fi
+
+# نمایش نتیجه A رکورد MX
+echo -e "A Record for MX host (${MX_HOST:-None}):"
 if [ "$A_OK" = true ]; then
     if [ "$IP_MATCH_OK" = true ]; then
-        echo -e "${GREEN}${A_RECORD} (Matches user IP: ${REAL_IP})${NC}"
+        echo -e "${GREEN}${MX_IP} (Matches user IP: ${REAL_IP})${NC}"
     else
-        echo -e "${RED}${A_RECORD} (Does NOT match user IP: ${REAL_IP})${NC}"
+        echo -e "${YELLOW}${MX_IP} (Does NOT match user IP: ${REAL_IP})${NC}"
     fi
 else
-    echo -e "${RED}Error: No A record found for mail.${DOMAIN}!${NC}"
+    echo -e "${RED}Error: No A/AAAA record found for MX host '${MX_HOST:-None}'!${NC}"
 fi
 echo ""
+
+# # رکوردهای MX و A
+# echo "----------------------------------"
+# echo "4. Checking MX and A records..."
+# echo "----------------------------------"
+
+# MX_RECORDS=$(dig +short MX "$DOMAIN" | grep -v '^;' | awk '{print $2}' | sed 's/\.$//')
+# A_RECORD=$(dig +short A "mail.${DOMAIN}" | head -n1 | tr -d '[:space:]')
+
+# # وضعیت اولیه
+# MX_OK=false
+# A_OK=false
+# IP_MATCH_OK=false
+
+# # بررسی MX: آیا mail.${DOMAIN} در MX وجود دارد؟
+# if echo "$MX_RECORDS" | grep -q "^mail\.${DOMAIN}$" 2>/dev/null; then
+#     MX_OK=true
+# fi
+
+# # بررسی A رکورد
+# if [ -n "$A_RECORD" ]; then
+#     A_OK=true
+#     # بررسی تطابق IP
+#     if [ "$A_RECORD" = "$REAL_IP" ]; then
+#         IP_MATCH_OK=true
+#     fi
+# fi
+
+# # نمایش نتایج
+# echo -e "MX Records:"
+# if [ "$MX_OK" = true ]; then
+#     echo -e "${GREEN}$(echo "$MX_RECORDS" | sed "s/^mail\.${DOMAIN}$/& (OK)/")${NC}"
+# else
+#     echo -e "${RED}Error: mail.${DOMAIN} not found in MX records!${NC}"
+#     echo -e "${RED}Current MX: ${MX_RECORDS:-None}${NC}"
+# fi
+# echo ""
+
+# echo -e "A Record for mail.${DOMAIN}:"
+# if [ "$A_OK" = true ]; then
+#     if [ "$IP_MATCH_OK" = true ]; then
+#         echo -e "${GREEN}${A_RECORD} (Matches user IP: ${REAL_IP})${NC}"
+#     else
+#         echo -e "${RED}${A_RECORD} (Does NOT match user IP: ${REAL_IP})${NC}"
+#     fi
+# else
+#     echo -e "${RED}Error: No A record found for mail.${DOMAIN}!${NC}"
+# fi
+# echo ""
 
 # نمایش email_stat
 echo "----------------------------------"
