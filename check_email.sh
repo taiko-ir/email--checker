@@ -1,4 +1,13 @@
 #!/bin/bash
+
+# -----------------------------------------------------------------------------
+# Script Name : dns_mail_check.sh
+# Description : Check SPF, DKIM (domainkey) and related DNS records for a domain.
+# Author      : Davood Rafiee <davodrafiee@gmail.com>
+# Created by  : Davood Rafiee
+# -----------------------------------------------------------------------------
+
+
 clear
 #read -rp "Enter domain: " DOMAIN
 read -rp "Enter domain: " -e DOMAIN
