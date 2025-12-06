@@ -40,7 +40,6 @@ fi
 
 echo ""
 
-
 # مقایسه رکورد TXT (به‌صورت مجموعه‌ای)
 echo "----------------------------------"
 echo "2. Checking TXT records for domain..."
@@ -99,6 +98,7 @@ else
 fi
 
 echo ""
+sleep 1
 
 echo "----------------------------------"
 echo "3. Checking domainkey TXT records..."
@@ -144,6 +144,8 @@ else
     echo -e "Result: ${RED}domainkey TXT records do NOT match ❌${NC}"
 fi
 echo ""
+sleep 1
+
 
 # رکوردهای MX و A
 echo "----------------------------------"
@@ -204,7 +206,7 @@ else
     echo -e "${RED}Error: No A/AAAA record found for MX host '${MX_HOST:-None}'!${NC}"
 fi
 echo ""
-
+sleep 1
 
 # نمایش email_stat
 echo "----------------------------------"
