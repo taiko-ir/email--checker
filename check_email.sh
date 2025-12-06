@@ -79,11 +79,25 @@ echo "Netafraz SPF: $SPF2_JOINED"
 echo "----------------------------------"
 
 # مقایسه فقط SPF
-if diff <(echo "$SPF1_JOINED") <(echo "$SPF2_JOINED") &>/dev/null; then
+# if diff <(echo "$SPF1_JOINED") <(echo "$SPF2_JOINED") &>/dev/null; then
+#     echo -e "Result: ${GREEN}SPF records match ✅${NC}"
+# else
+#     echo -e "Result: ${RED}SPF records do NOT match ❌${NC}"
+# fi
+# echo ""
+
+if [[ -z "$SPF1_JOINED" && -z "$SPF2_JOINED" ]]; then
+    # هیچ SPFای در هیچ‌کدوم از سورس‌ها نیست
+    echo -e "Result: ${RED}No SPF record found in either DNS source ❌${NC}"
+elif [[ -z "$SPF1_JOINED" || -z "$SPF2_JOINED" ]]; then
+    # فقط یکی از سورس‌ها SPF دارد
+    echo -e "Result: ${RED}SPF record missing in one of the DNS sources ❌${NC}"
+elif diff <(printf '%s\n' "$SPF1_JOINED") <(printf '%s\n' "$SPF2_JOINED") &>/dev/null; then
     echo -e "Result: ${GREEN}SPF records match ✅${NC}"
 else
     echo -e "Result: ${RED}SPF records do NOT match ❌${NC}"
 fi
+
 echo ""
 
 echo "----------------------------------"
@@ -110,7 +124,21 @@ echo "$DK2_JOINED"
 echo ""
 
 # مقایسه با diff
-if diff <(echo "$DK1_JOINED") <(echo "$DK2_JOINED") &>/dev/null; then
+# if diff <(echo "$DK1_JOINED") <(echo "$DK2_JOINED") &>/dev/null; then
+#     echo -e "Result: ${GREEN}domainkey TXT records match ✅${NC}"
+# else
+#     echo -e "Result: ${RED}domainkey TXT records do NOT match ❌${NC}"
+# fi
+# echo ""
+
+# مقایسه با در نظر گرفتن حالت خالی بودن
+if [[ -z "$DK1_JOINED" && -z "$DK2_JOINED" ]]; then
+    # هیچ رکوردی در هیچ‌کدوم نیست
+    echo -e "Result: ${RED}No x._domainkey TXT record found in either DNS source ❌${NC}"
+elif [[ -z "$DK1_JOINED" || -z "$DK2_JOINED" ]]; then
+    # فقط یکی از سورس‌ها رکورد دارد
+    echo -e "Result: ${RED}x._domainkey TXT record missing in one of the DNS sources ❌${NC}"
+elif diff <(printf '%s\n' "$DK1_JOINED") <(printf '%s\n' "$DK2_JOINED") &>/dev/null; then
     echo -e "Result: ${GREEN}domainkey TXT records match ✅${NC}"
 else
     echo -e "Result: ${RED}domainkey TXT records do NOT match ❌${NC}"
@@ -177,54 +205,6 @@ else
 fi
 echo ""
 
-# # رکوردهای MX و A
-# echo "----------------------------------"
-# echo "4. Checking MX and A records..."
-# echo "----------------------------------"
-
-# MX_RECORDS=$(dig +short MX "$DOMAIN" | grep -v '^;' | awk '{print $2}' | sed 's/\.$//')
-# A_RECORD=$(dig +short A "mail.${DOMAIN}" | head -n1 | tr -d '[:space:]')
-
-# # وضعیت اولیه
-# MX_OK=false
-# A_OK=false
-# IP_MATCH_OK=false
-
-# # بررسی MX: آیا mail.${DOMAIN} در MX وجود دارد؟
-# if echo "$MX_RECORDS" | grep -q "^mail\.${DOMAIN}$" 2>/dev/null; then
-#     MX_OK=true
-# fi
-
-# # بررسی A رکورد
-# if [ -n "$A_RECORD" ]; then
-#     A_OK=true
-#     # بررسی تطابق IP
-#     if [ "$A_RECORD" = "$REAL_IP" ]; then
-#         IP_MATCH_OK=true
-#     fi
-# fi
-
-# # نمایش نتایج
-# echo -e "MX Records:"
-# if [ "$MX_OK" = true ]; then
-#     echo -e "${GREEN}$(echo "$MX_RECORDS" | sed "s/^mail\.${DOMAIN}$/& (OK)/")${NC}"
-# else
-#     echo -e "${RED}Error: mail.${DOMAIN} not found in MX records!${NC}"
-#     echo -e "${RED}Current MX: ${MX_RECORDS:-None}${NC}"
-# fi
-# echo ""
-
-# echo -e "A Record for mail.${DOMAIN}:"
-# if [ "$A_OK" = true ]; then
-#     if [ "$IP_MATCH_OK" = true ]; then
-#         echo -e "${GREEN}${A_RECORD} (Matches user IP: ${REAL_IP})${NC}"
-#     else
-#         echo -e "${RED}${A_RECORD} (Does NOT match user IP: ${REAL_IP})${NC}"
-#     fi
-# else
-#     echo -e "${RED}Error: No A record found for mail.${DOMAIN}!${NC}"
-# fi
-# echo ""
 
 # نمایش email_stat
 echo "----------------------------------"
@@ -244,11 +224,31 @@ echo "----------------------------------"
 echo "6. Checking maills output..."
 echo "----------------------------------"
 
-MAILLS_OUTPUT=$(maills "$DOMAIN")
-echo "$MAILLS_OUTPUT"
-echo ""
+# MAILLS_OUTPUT=$(maills "$DOMAIN")
+# echo "$MAILLS_OUTPUT"
+# echo ""
 
-if echo "$MAILLS_OUTPUT" | grep -q "$DOMAIN"; then
+# if echo "$MAILLS_OUTPUT" | grep -q "$DOMAIN"; then
+#     echo -e "${GREEN}✅ maills output is valid${NC}"
+# else
+#     echo -e "${RED}❌ maills output does NOT contain domain${NC}"
+# fi
+
+echo "----------------------------------"
+echo "6. Checking maills output..."
+echo "----------------------------------"
+
+MAILLS_OUTPUT=$(maills "$DOMAIN")
+
+# Ask user if they want to see the maills output
+read -r -p "Do you want to display the email's list)? [y/N]: " SHOW_MAILLS
+
+if [[ "$SHOW_MAILLS" =~ ^[Yy]$ ]]; then
+    echo "$MAILLS_OUTPUT"
+    echo ""
+fi
+
+if echo "$MAILLS_OUTPUT" | grep -q -- "$DOMAIN"; then
     echo -e "${GREEN}✅ maills output is valid${NC}"
 else
     echo -e "${RED}❌ maills output does NOT contain domain${NC}"
