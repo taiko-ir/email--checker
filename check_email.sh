@@ -234,10 +234,6 @@ echo "----------------------------------"
 #     echo -e "${RED}❌ maills output does NOT contain domain${NC}"
 # fi
 
-echo "----------------------------------"
-echo "6. Checking maills output..."
-echo "----------------------------------"
-
 MAILLS_OUTPUT=$(maills "$DOMAIN")
 
 # Ask user if they want to see the maills output
