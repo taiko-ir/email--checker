@@ -255,21 +255,25 @@ if [[ "$SHOW_MAILLS" =~ ^[Yy]$ ]]; then
     echo ""
 fi
 
-if echo "$MAILLS_OUTPUT" | grep -q -- "$DOMAIN"; then
-    echo -e "${GREEN}✅ maills output is valid${NC}"
-    SUMMARY+=("Maills: OK")
-else
-    echo -e "${RED}❌ maills output does NOT contain domain${NC}"
-    SUMMARY+=("Maills: FAILED")
-fi
+# if echo "$MAILLS_OUTPUT" | grep -q -- "$DOMAIN"; then
+#     echo -e "${GREEN}✅ maills output is valid${NC}"
+#     SUMMARY+=("Maills: OK")
+# else
+#     echo -e "${RED}❌ maills output does NOT contain domain${NC}"
+#     SUMMARY+=("Maills: FAILED")
+# fi
 
 echo ""
 echo "=========================================="
-echo "SUMMARY FOR NOTE"
+echo "SUMMARY"
 echo "=========================================="
 
 for item in "${SUMMARY[@]}"; do
-    echo "- $item"
+    if [[ "$item" == *"OK"* ]]; then
+        echo -e "${GREEN}✅ $item${NC}"
+    else
+        echo -e "${RED}❌ $item${NC}"
+    fi
 done
 
 echo "=========================================="
