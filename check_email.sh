@@ -101,7 +101,7 @@ echo ""
 sleep 1
 
 echo "----------------------------------"
-echo "3. Checking domainkey TXT records..."
+echo "3. Checking DKIM TXT records..."
 echo "----------------------------------"
 # می‌گیریم و کوتیشن‌ها را حذف می‌کنیم
 mapfile -t DK1_ARR < <(dig +short TXT "x._domainkey.${DOMAIN}" | tr -d '"' | sort)
@@ -132,15 +132,15 @@ if [[ -z "$DK1_JOINED" && -z "$DK2_JOINED" ]]; then
 elif [[ -z "$DK1_JOINED" || -z "$DK2_JOINED" ]]; then
     # فقط یکی از سورس‌ها رکورد دارد
     echo -e "Result: ${RED}x._domainkey TXT record missing in one of the DNS sources ❌${NC}"
-    SUMMARY+=("DomainKey: MISSING")
+    SUMMARY+=("DKIM: MISSING")
 
 elif diff <(printf '%s\n' "$DK1_JOINED") <(printf '%s\n' "$DK2_JOINED") &>/dev/null; then
     echo -e "Result: ${GREEN}domainkey TXT records match ✅${NC}"
-    SUMMARY+=("DomainKey: OK")
+    SUMMARY+=("DKIM: OK")
 
 else
     echo -e "Result: ${RED}domainkey TXT records do NOT match ❌${NC}"
-    SUMMARY+=("DomainKey: FAILED")
+    SUMMARY+=("DKIM: FAILED")
 fi
 
 echo ""
