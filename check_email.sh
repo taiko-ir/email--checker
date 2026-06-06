@@ -16,6 +16,8 @@ GREEN='\e[1;92m'
 RED='\e[1;91m'
 YELLOW='\e[1;93m'
 NC='\033[0m'
+SUMMARY=()
+
 echo "----------------------------------"
 echo "1. Checking IP and host info..."
 echo "----------------------------------"
@@ -42,9 +44,11 @@ echo -e "host name: ${GREEN}${HOST}${NC}"
 # مقایسه IPها
 if [[ "$RAW_IP" == "$REAL_IP" ]]; then
     echo -e "${GREEN}✅ IP matches userips ✔️${NC}"
+    SUMMARY+=("IP Match: OK")
 else
     echo -e "${YELLOW}⚠️  IP does NOT match userips ⚠️${NC}"
     echo -e "(Debug: IP='$RAW_IP' vs REAL_IP='$REAL_IP')"
+    SUMMARY+=("IP Match: FAILED")
 fi
 
 echo ""
@@ -66,13 +70,6 @@ join_lines() {
 TXT1_JOINED=$(join_lines "${ARR1[@]}")
 TXT2_JOINED=$(join_lines "${ARR2[@]}")
 
-# echo "TXT (default):"
-# echo "$TXT1_JOINED"
-# echo ""
-# echo "TXT (netafraz):"
-# echo "$TXT2_JOINED"
-# echo ""
-
 # استخراج فقط رکوردهای SPF برای مقایسه
 mapfile -t SPF1 < <(printf "%s\n" "${ARR1[@]}" | grep -i '^v=spf1' || true)
 mapfile -t SPF2 < <(printf "%s\n" "${ARR2[@]}" | grep -i '^v=spf1' || true)
@@ -86,24 +83,18 @@ echo "Default SPF: $SPF1_JOINED"
 echo "Netafraz SPF: $SPF2_JOINED"
 echo "----------------------------------"
 
-# مقایسه فقط SPF
-# if diff <(echo "$SPF1_JOINED") <(echo "$SPF2_JOINED") &>/dev/null; then
-#     echo -e "Result: ${GREEN}SPF records match ✅${NC}"
-# else
-#     echo -e "Result: ${RED}SPF records do NOT match ❌${NC}"
-# fi
-# echo ""
-
 if [[ -z "$SPF1_JOINED" && -z "$SPF2_JOINED" ]]; then
-    # هیچ SPFای در هیچ‌کدوم از سورس‌ها نیست
     echo -e "Result: ${RED}No SPF record found in either DNS source ❌${NC}"
+    SUMMARY+=("SPF: NOT FOUND")
 elif [[ -z "$SPF1_JOINED" || -z "$SPF2_JOINED" ]]; then
-    # فقط یکی از سورس‌ها SPF دارد
     echo -e "Result: ${RED}SPF record missing in one of the DNS sources ❌${NC}"
+    SUMMARY+=("SPF: MISSING")
 elif diff <(printf '%s\n' "$SPF1_JOINED") <(printf '%s\n' "$SPF2_JOINED") &>/dev/null; then
     echo -e "Result: ${GREEN}SPF records match ✅${NC}"
+    SUMMARY+=("SPF: OK")
 else
     echo -e "Result: ${RED}SPF records do NOT match ❌${NC}"
+    SUMMARY+=("SPF: FAILED")
 fi
 
 echo ""
@@ -132,26 +123,26 @@ echo "x._domainkey TXT (netafraz):"
 echo "$DK2_JOINED"
 echo ""
 
-# مقایسه با diff
-# if diff <(echo "$DK1_JOINED") <(echo "$DK2_JOINED") &>/dev/null; then
-#     echo -e "Result: ${GREEN}domainkey TXT records match ✅${NC}"
-# else
-#     echo -e "Result: ${RED}domainkey TXT records do NOT match ❌${NC}"
-# fi
-# echo ""
-
 # مقایسه با در نظر گرفتن حالت خالی بودن
 if [[ -z "$DK1_JOINED" && -z "$DK2_JOINED" ]]; then
     # هیچ رکوردی در هیچ‌کدوم نیست
     echo -e "Result: ${RED}No x._domainkey TXT record found in either DNS source ❌${NC}"
+    SUMMARY+=("DomainKey: NOT FOUND")
+
 elif [[ -z "$DK1_JOINED" || -z "$DK2_JOINED" ]]; then
     # فقط یکی از سورس‌ها رکورد دارد
     echo -e "Result: ${RED}x._domainkey TXT record missing in one of the DNS sources ❌${NC}"
+    SUMMARY+=("DomainKey: MISSING")
+
 elif diff <(printf '%s\n' "$DK1_JOINED") <(printf '%s\n' "$DK2_JOINED") &>/dev/null; then
     echo -e "Result: ${GREEN}domainkey TXT records match ✅${NC}"
+    SUMMARY+=("DomainKey: OK")
+
 else
     echo -e "Result: ${RED}domainkey TXT records do NOT match ❌${NC}"
+    SUMMARY+=("DomainKey: FAILED")
 fi
+
 echo ""
 sleep 1
 
@@ -217,6 +208,24 @@ fi
 echo ""
 sleep 1
 
+if [ "$MX_OK" = true ]; then
+    SUMMARY+=("MX: OK")
+else
+    SUMMARY+=("MX: FAILED")
+fi
+
+if [ "$A_OK" = true ]; then
+    SUMMARY+=("MX A Record: OK")
+else
+    SUMMARY+=("MX A Record: FAILED")
+fi
+
+if [ "$IP_MATCH_OK" = true ]; then
+    SUMMARY+=("MX IP Match: OK")
+else
+    SUMMARY+=("MX IP Match: FAILED")
+fi
+
 # نمایش email_stat
 echo "----------------------------------"
 echo "5. Email Stat:"
@@ -235,15 +244,6 @@ echo "----------------------------------"
 echo "6. Checking maills output..."
 echo "----------------------------------"
 
-# MAILLS_OUTPUT=$(maills "$DOMAIN")
-# echo "$MAILLS_OUTPUT"
-# echo ""
-
-# if echo "$MAILLS_OUTPUT" | grep -q "$DOMAIN"; then
-#     echo -e "${GREEN}✅ maills output is valid${NC}"
-# else
-#     echo -e "${RED}❌ maills output does NOT contain domain${NC}"
-# fi
 
 MAILLS_OUTPUT=$(maills "$DOMAIN")
 
@@ -257,7 +257,19 @@ fi
 
 if echo "$MAILLS_OUTPUT" | grep -q -- "$DOMAIN"; then
     echo -e "${GREEN}✅ maills output is valid${NC}"
+    SUMMARY+=("Maills: OK")
 else
     echo -e "${RED}❌ maills output does NOT contain domain${NC}"
+    SUMMARY+=("Maills: FAILED")
 fi
 
+echo ""
+echo "=========================================="
+echo "SUMMARY FOR NOTE"
+echo "=========================================="
+
+for item in "${SUMMARY[@]}"; do
+    echo "- $item"
+done
+
+echo "=========================================="
