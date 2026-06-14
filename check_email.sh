@@ -231,7 +231,6 @@ echo "----------------------------------"
 echo "5. Email Stat:"
 echo "----------------------------------"
 # اجرای email_stat و گرفتن stderr
-# اجرای email_stat و گرفتن stderr
 ERROR_OUTPUT=$(email_stat -c 2>&1)
 EXIT_CODE=$?
 
@@ -245,8 +244,8 @@ else
     echo "$ERROR_OUTPUT"
 
     # بررسی وضعیت mail()
-    MAIL_STATUS=$(echo "$ERROR_OUTPUT" | awk -F'│' '/mail\(\)/ {gsub(/^[ \t]+|[ \t]+$/, "", $3); print $3}')
-
+    MAIL_STATUS=$(echo "$ERROR_OUTPUT" \
+    | awk -F'│' '/mail\(\)/ {gsub(/^[[:space:]]+|[[:space:]]+$/, "", $3); print $3}')
     if [[ "$MAIL_STATUS" == "Enabled" ]]; then
         SUMMARY+=("mail() Status: OK")
     else
