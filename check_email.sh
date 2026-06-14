@@ -234,6 +234,9 @@ echo "----------------------------------"
 ERROR_OUTPUT=$(email_stat -c 2>&1)
 EXIT_CODE=$?
 
+echo "MAIL_STATUS=<$MAIL_STATUS>"
+printf '%q\n' "$MAIL_STATUS"
+
 if [ $EXIT_CODE -ne 0 ]; then
     # فقط پیام خطا با رنگ قرمز
     echo -e "${RED}${ERROR_OUTPUT}${NC}"
@@ -271,7 +274,7 @@ fi
 
 echo ""
 echo "=========================================="
-echo "SUMMARY FOR NOTE"
+echo "SUMMARY"
 echo "=========================================="
 
 for item in "${SUMMARY[@]}"; do
