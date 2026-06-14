@@ -232,7 +232,7 @@ echo "5. Email Stat:"
 echo "----------------------------------"
 # اجرای email_stat و گرفتن stderr
 ERROR_OUTPUT=$(email_stat -c 2>&1)
-EXIT_CODE=$?
+CLEAN_EMAIL_OUTPUT=$(echo "$ERROR_OUTPUT" | sed 's/\x1B\[[0-9;]*m//g')
 
 if [ $EXIT_CODE -ne 0 ]; then
     # فقط پیام خطا با رنگ قرمز
@@ -243,21 +243,21 @@ else
     # خروجی عادی
     echo "$ERROR_OUTPUT"
 
-    # بررسی وضعیت mail()
-    MAIL_STATUS=$(
-    echo "$ERROR_OUTPUT" |
-    grep 'mail()' |
-    cut -d '│' -f3 |
-    xargs
-    )
-    if echo "$ERROR_OUTPUT" | grep -qE 'mail\(\).*Enabled'; then
+    # # بررسی وضعیت mail()
+    # MAIL_STATUS=$(
+    # echo "$ERROR_OUTPUT" |
+    # grep 'mail()' |
+    # cut -d '│' -f3 |
+    # xargs
+    # )
+    if echo "$CLEAN_EMAIL_OUTPUT" | grep 'mail()' | grep -q 'Enabled'; then
         SUMMARY+=("mail() Status: OK")
     else
         SUMMARY+=("mail() Status: BLOCKED")
     fi
 fi
-echo "MAIL_STATUS=<$MAIL_STATUS>"
-printf '%q\n' "$MAIL_STATUS"
+# echo "MAIL_STATUS=<$MAIL_STATUS>"
+# printf '%q\n' "$MAIL_STATUS"
 
 echo "----------------------------------"
 echo "6. Checking maills output..."
