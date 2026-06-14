@@ -258,14 +258,14 @@ fi
 
 echo ""
 echo "=========================================="
-echo "SUMMARY"
+echo "SUMMARY FOR NOTE"
 echo "=========================================="
 
 for item in "${SUMMARY[@]}"; do
     if [[ "$item" == *"OK"* ]]; then
-        echo -e "${GREEN}✅ $item${NC}"
+        echo -e "${GREEN}✔ ${item%: OK}${NC}"
     else
-        echo -e "${RED}❌ $item${NC}"
+        echo -e "${RED}✘ ${item%%:*}${NC}"
     fi
 done
 
