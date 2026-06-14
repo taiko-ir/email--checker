@@ -234,9 +234,6 @@ echo "----------------------------------"
 ERROR_OUTPUT=$(email_stat -c 2>&1)
 EXIT_CODE=$?
 
-echo "MAIL_STATUS=<$MAIL_STATUS>"
-printf '%q\n' "$MAIL_STATUS"
-
 if [ $EXIT_CODE -ne 0 ]; then
     # فقط پیام خطا با رنگ قرمز
     echo -e "${RED}${ERROR_OUTPUT}${NC}"
@@ -247,14 +244,20 @@ else
     echo "$ERROR_OUTPUT"
 
     # بررسی وضعیت mail()
-    MAIL_STATUS=$(echo "$ERROR_OUTPUT" \
-    | awk -F'│' '/mail\(\)/ {gsub(/^[[:space:]]+|[[:space:]]+$/, "", $3); print $3}')
-    if [[ "$MAIL_STATUS" == "Enabled" ]]; then
+    MAIL_STATUS=$(
+    echo "$ERROR_OUTPUT" |
+    grep 'mail()' |
+    cut -d '│' -f3 |
+    xargs
+    )
+    if echo "$ERROR_OUTPUT" | grep -qE 'mail\(\).*Enabled'; then
         SUMMARY+=("mail() Status: OK")
     else
         SUMMARY+=("mail() Status: BLOCKED")
     fi
 fi
+echo "MAIL_STATUS=<$MAIL_STATUS>"
+printf '%q\n' "$MAIL_STATUS"
 
 echo "----------------------------------"
 echo "6. Checking maills output..."
