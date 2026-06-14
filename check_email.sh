@@ -112,9 +112,13 @@ join_lines() {
   printf "%s\n" "${@}"
 }
 
-# لیست‌ها را join می‌کنیم
+# لیست‌ها را join می‌کنیم (برای نمایش)
 DK1_JOINED=$(join_lines "${DK1_ARR[@]}")
 DK2_JOINED=$(join_lines "${DK2_ARR[@]}")
+
+# نسخه نرمال‌شده برای مقایسه (حذف تمام فاصله‌ها)
+DK1_COMPARE=$(printf "%s" "${DK1_ARR[@]}" | tr -d '[:space:]')
+DK2_COMPARE=$(printf "%s" "${DK2_ARR[@]}" | tr -d '[:space:]')
 
 echo "x._domainkey TXT (default):"
 echo "$DK1_JOINED"
@@ -134,7 +138,7 @@ elif [[ -z "$DK1_JOINED" || -z "$DK2_JOINED" ]]; then
     echo -e "Result: ${RED}x._domainkey TXT record missing in one of the DNS sources ❌${NC}"
     SUMMARY+=("DKIM: MISSING")
 
-elif diff <(printf '%s\n' "$DK1_JOINED") <(printf '%s\n' "$DK2_JOINED") &>/dev/null; then
+elif [[ "$DK1_COMPARE" == "$DK2_COMPARE" ]]; then
     echo -e "Result: ${GREEN}domainkey TXT records match ✅${NC}"
     SUMMARY+=("DKIM: OK")
 
@@ -231,33 +235,27 @@ echo "----------------------------------"
 echo "5. Email Stat:"
 echo "----------------------------------"
 # اجرای email_stat و گرفتن stderr
+# اجرای email_stat و گرفتن stderr
 ERROR_OUTPUT=$(email_stat -c 2>&1)
+EXIT_CODE=$?
 CLEAN_EMAIL_OUTPUT=$(echo "$ERROR_OUTPUT" | sed 's/\x1B\[[0-9;]*m//g')
 
 if [ $EXIT_CODE -ne 0 ]; then
     # فقط پیام خطا با رنگ قرمز
     echo -e "${RED}${ERROR_OUTPUT}${NC}"
-    SUMMARY+=("mail() Status: FAILED")
+    SUMMARY+=("mail Status: FAILED")
 
 else
     # خروجی عادی
     echo "$ERROR_OUTPUT"
 
-    # # بررسی وضعیت mail()
-    # MAIL_STATUS=$(
-    # echo "$ERROR_OUTPUT" |
-    # grep 'mail()' |
-    # cut -d '│' -f3 |
-    # xargs
-    # )
     if echo "$CLEAN_EMAIL_OUTPUT" | grep 'mail()' | grep -q 'Enabled'; then
-        SUMMARY+=("mail() Status: OK")
+        SUMMARY+=("mail Status: OK")
     else
-        SUMMARY+=("mail() Status: BLOCKED")
+        SUMMARY+=("mail Status: BLOCKED")
     fi
 fi
-# echo "MAIL_STATUS=<$MAIL_STATUS>"
-# printf '%q\n' "$MAIL_STATUS"
+
 
 echo "----------------------------------"
 echo "6. Checking maills output..."
