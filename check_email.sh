@@ -231,15 +231,29 @@ echo "----------------------------------"
 echo "5. Email Stat:"
 echo "----------------------------------"
 # اجرای email_stat و گرفتن stderr
+# اجرای email_stat و گرفتن stderr
 ERROR_OUTPUT=$(email_stat -c 2>&1)
 EXIT_CODE=$?
+
 if [ $EXIT_CODE -ne 0 ]; then
     # فقط پیام خطا با رنگ قرمز
     echo -e "${RED}${ERROR_OUTPUT}${NC}"
+    SUMMARY+=("mail() Status: FAILED")
+
 else
     # خروجی عادی
     echo "$ERROR_OUTPUT"
+
+    # بررسی وضعیت mail()
+    MAIL_STATUS=$(echo "$ERROR_OUTPUT" | awk -F'│' '/mail\(\)/ {gsub(/^[ \t]+|[ \t]+$/, "", $3); print $3}')
+
+    if [[ "$MAIL_STATUS" == "Enabled" ]]; then
+        SUMMARY+=("mail() Status: OK")
+    else
+        SUMMARY+=("mail() Status: BLOCKED")
+    fi
 fi
+
 echo "----------------------------------"
 echo "6. Checking maills output..."
 echo "----------------------------------"
