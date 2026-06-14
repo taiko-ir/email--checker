@@ -248,20 +248,13 @@ echo "----------------------------------"
 MAILLS_OUTPUT=$(maills "$DOMAIN")
 
 # Ask user if they want to see the maills output
-read -r -p "Do you want to display the email's list)? [y/N]: " SHOW_MAILLS
+read -r -t 3 -p "Do you want to display the email's list? [y/N]: " SHOW_MAILLS || { SHOW_MAILLS="N"; echo; }
 
 if [[ "$SHOW_MAILLS" =~ ^[Yy]$ ]]; then
     echo "$MAILLS_OUTPUT"
     echo ""
 fi
 
-# if echo "$MAILLS_OUTPUT" | grep -q -- "$DOMAIN"; then
-#     echo -e "${GREEN}✅ maills output is valid${NC}"
-#     SUMMARY+=("Maills: OK")
-# else
-#     echo -e "${RED}❌ maills output does NOT contain domain${NC}"
-#     SUMMARY+=("Maills: FAILED")
-# fi
 
 echo ""
 echo "=========================================="
