@@ -275,7 +275,7 @@ fi
 
 echo ""
 echo "=========================================="
-echo "SUMMARY FOR NOTE"
+echo "SUMMARY FOR $DOMAIN"
 echo "=========================================="
 
 for item in "${SUMMARY[@]}"; do
