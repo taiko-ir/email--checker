@@ -9,7 +9,6 @@
 
 
 clear
-#read -rp "Enter domain: " DOMAIN
 read -rp "Enter domain: " -e DOMAIN
 
 GREEN='\e[1;92m'
@@ -25,14 +24,9 @@ echo "----------------------------------"
 # اجرای ipcheck و حذف escape sequences (رنگ/بولد)
 CLEAN_OUTPUT=$(ipcheck -rs "$DOMAIN" | sed 's/\x1B\[[0-9;]*m//g')
 
-# استخراج مقادیر از ipcheck 
-#RAW_IP=$(echo "$CLEAN_OUTPUT" | grep 'IP Address' | awk '{print $3}' | tr -d '\r\n[:space:]')
-#HOST=$(echo "$CLEAN_OUTPUT" | grep "SMTP host name" | cut -d ':' -f2 | xargs)
-
 # استخراج مقادیر از خروجی تمیز
 RAW_IP=$(echo "$CLEAN_OUTPUT" | grep 'IP Address' | awk '{print $3}' | tr -d '\r\n[:space:]')
 HOST=$(echo "$CLEAN_OUTPUT" | sed -nE 's/.*SMTP host name[[:space:]]*:[[:space:]]*//p')
-
 
 # گرفتن IP واقعی از userips و تمیزکاری
 REAL_IP=$(userips | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' | head -n1 | tr -d '\r\n[:space:]')
@@ -56,7 +50,7 @@ echo ""
 # مقایسه رکورد TXT (به‌صورت مجموعه‌ای)
 echo "----------------------------------"
 echo "2. Checking TXT records for domain..."
-#echo "----------------------------------"
+
 # دریافت رکوردهای TXT از دو منبع
 mapfile -t ARR1 < <(dig +short TXT "$DOMAIN" | tr -d '"' | sort)
 mapfile -t ARR2 < <(dig @ns.netafraz.com +short TXT "$DOMAIN" | tr -d '"' | sort)
@@ -262,7 +256,7 @@ echo "6. Checking maills output..."
 echo "----------------------------------"
 
 
-MAILLS_OUTPUT=$(maills "$DOMAIN")
+MAILLS_OUTPUT=$(hst-cli email list "$DOMAIN")
 
 # Ask user if they want to see the maills output
 read -r -t 3 -p "Do you want to display the email's list? [y/N]: " SHOW_MAILLS || { SHOW_MAILLS="N"; echo; }
