@@ -345,6 +345,7 @@ check_ssl() {
 
     echo "Checking SSL for $SSL_HOST..."
 
+    # First check whether the server presents any certificate on port 443
     SSL_CERT=$(
         timeout 8 openssl s_client \
             -connect "${SSL_HOST}:443" \
@@ -353,22 +354,35 @@ check_ssl() {
         openssl x509 -noout -subject -issuer -dates 2>/dev/null
     )
 
-    if [[ -n "$SSL_CERT" ]]; then
-        if timeout 8 openssl s_client \
-            -connect "${SSL_HOST}:443" \
-            -servername "$SSL_HOST" \
-            </dev/null 2>/dev/null |
-            openssl x509 -noout -checkend 0 >/dev/null 2>&1
-        then
-            echo -e "${GREEN}SSL certificate found and valid ✅${NC}"
-            return 0
-        else
-            echo -e "${RED}SSL certificate found but expired/invalid ❌${NC}"
-            return 2
-        fi
-    else
+    if [[ -z "$SSL_CERT" ]]; then
         echo -e "${RED}No SSL certificate found ❌${NC}"
         return 1
+    fi
+
+    # Check whether the certificate has expired
+    if ! timeout 8 openssl s_client \
+        -connect "${SSL_HOST}:443" \
+        -servername "$SSL_HOST" \
+        </dev/null 2>/dev/null |
+        openssl x509 -noout -checkend 0 >/dev/null 2>&1
+    then
+        echo -e "${RED}SSL certificate found but expired ❌${NC}"
+        return 2
+    fi
+
+    # Verify certificate chain and hostname (SAN/CN)
+    if timeout 8 openssl s_client \
+        -connect "${SSL_HOST}:443" \
+        -servername "$SSL_HOST" \
+        -verify_hostname "$SSL_HOST" \
+        -verify_return_error \
+        </dev/null >/dev/null 2>&1
+    then
+        echo -e "${GREEN}SSL certificate found and valid for hostname ✅${NC}"
+        return 0
+    else
+        echo -e "${RED}SSL certificate found but is not valid for hostname '$SSL_HOST' ❌${NC}"
+        return 3
     fi
 }
 
@@ -394,6 +408,8 @@ if [[ "$MAIL_SSL_STATUS" -eq 0 ]]; then
     SUMMARY+=("SSL $MAIL_DOMAIN: OK")
 elif [[ "$MAIL_SSL_STATUS" -eq 2 ]]; then
     SUMMARY+=("SSL $MAIL_DOMAIN: EXPIRED")
+elif [[ "$MAIL_SSL_STATUS" -eq 3 ]]; then
+    SUMMARY+=("SSL $MAIL_DOMAIN: HOSTNAME MISMATCH")
 else
     SUMMARY+=("SSL $MAIL_DOMAIN: NOT FOUND")
 fi
@@ -450,11 +466,28 @@ echo "=========================================="
 echo "SUMMARY FOR $DOMAIN"
 echo "=========================================="
 
+# Find the longest summary label for automatic column alignment
+MAX_LABEL_LENGTH=0
+
 for item in "${SUMMARY[@]}"; do
-    if [[ "$item" == *"OK"* ]]; then
-        echo -e "${GREEN}✅ $item${NC}"
+    LABEL="${item%%:*}"
+
+    if (( ${#LABEL} > MAX_LABEL_LENGTH )); then
+        MAX_LABEL_LENGTH=${#LABEL}
+    fi
+done
+
+# Display aligned summary
+for item in "${SUMMARY[@]}"; do
+    LABEL="${item%%:*}"
+    STATUS="${item#*: }"
+
+    if [[ "$STATUS" == OK* ]]; then
+        printf "${GREEN}✅ %-*s${NC} | ${GREEN}%s${NC}\n" \
+            "$MAX_LABEL_LENGTH" "$LABEL" "$STATUS"
     else
-        echo -e "${RED}❌ $item${NC}"
+        printf "${RED}❌ %-*s${NC} | ${RED}%s${NC}\n" \
+            "$MAX_LABEL_LENGTH" "$LABEL" "$STATUS"
     fi
 done
 
